@@ -1,0 +1,15 @@
+FROM node:20-alpine
+
+WORKDIR /app
+
+COPY package*.json ./
+
+RUN npm install
+
+# Don't copy the entire context, only the necessary files if wanted
+# Because we are bind the directory to the host machine
+# COPY . .
+
+EXPOSE 5001
+
+CMD [ "npm", "run", "dev" ]

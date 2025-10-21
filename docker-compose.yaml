@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  users_db:
+    container_name: postgres_users_db_container
+    image: postgres:13.22-alpine3.21
+    restart: always
+    ports:
+      - "5431:5432"
+    environment:
+      - POSTGRES_DB=users_db
+      - POSTGRES_USER=jeral
+      - POSTGRES_PASSWORD=1234
+    volumes:
+      - ./docker/db/postgres_users_db:/var/lib/postgresql/data
+  pgAdmin:
+    container_name: pgadmin_container
+    image: elestio/pgadmin:latest
+    restart: always
+    ports:
+      - "5433:5433"
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=jeral@gmail.com
+      - PGADMIN_DEFAULT_PASSWORD=1234
+      - PGADMIN_LISTEN_PORT=5433
+    volumes:
+      - ./docker/ms/pgAdmin:/var/lib/pgadmin
+    depends_on:
+      - users_db
+  user-service:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: user_service_container
+    ports:
+      - "5001:5001"
+    environment:
+      - PORT=5001
+      - NODE_ENV=development
+      - DATABASE_URL=postgresql://jeral:1234@users_db:5432/users_db
+      - CHOKIDAR_USEPOLLING=true
+      - WATCHPACK_POLLING=true
+    volumes:
+      - .:/app
+      - /app/node_modules
+    depends_on:
+      - users_db
