@@ -8,7 +8,6 @@
 
     /* Bundler / module settings */
     "moduleResolution": "bundler",
-    "verbatimModuleSyntax": true,
     "moduleDetection": "force",
     "noEmit": false,
     "outDir": "dist",
