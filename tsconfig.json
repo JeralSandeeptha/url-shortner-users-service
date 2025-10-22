@@ -3,11 +3,12 @@
     "target": "ES2023",
     "lib": ["ES2023"],
     "module": "ESNext",
-    "types": ["node"],
+    "types": ["jest", "node"],
     "skipLibCheck": true,
 
     /* Bundler / module settings */
     "moduleResolution": "bundler",
+    "esModuleInterop": true,
     "moduleDetection": "force",
     "noEmit": false,
     "outDir": "dist",
