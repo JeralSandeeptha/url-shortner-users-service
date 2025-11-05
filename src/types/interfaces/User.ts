@@ -1,6 +1,5 @@
 export interface User {
-    user_id: string;
-    keycloak_id: string;
+    user_id: number;
     username: string;
     email: string;
     firstName: string;

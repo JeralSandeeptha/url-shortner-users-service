@@ -55,3 +55,20 @@ export const createKeycloakUser = async (userData: UserKeycloakRequest ,token: s
         console.log(error);
     }
 }
+
+export const getSingleKycloakUser = async (email: string, token: string) => {
+    try {
+        const res = await axios.get(`${baseURL}/admin/realms/url-shortner/users?email=${email}`,
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "application/json",
+                },
+            }
+        );
+        return res.data;
+    } catch (error) {
+        logger.error(error);
+        console.log(error);
+    }
+}
