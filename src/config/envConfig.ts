@@ -6,5 +6,9 @@ dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
 export const envConfig = {
     PORT: process.env.PORT,
     DATABASE_URL: process.env.DATABASE_URL,
+    KEYCLOACK_SERVER_URL: process.env.KEYCLOACK_SERVER_URL,
+    KEYCLOACK_CLIENT_ID: process.env.KEYCLOACK_CLIENT_ID,
+    KEYCLOACK_CLIENT_SECRET: process.env.KEYCLOACK_CLIENT_SECRET,
+    KEYCLOACK_GRANT_TYPE: process.env.KEYCLOACK_GRANT_TYPE,
     NODE_ENV: process.env.NODE_ENV
 }
