@@ -1,6 +1,7 @@
 import './config/envConfig';
 import express, { Application } from 'express';
 import cors from 'cors';
+import cookieParser from 'cookie-parser';
 import logger from "./utils/logger";
 import './config/dbConfig';
 
@@ -12,8 +13,13 @@ const app: Application = express();
 const PORT = process.env.PORT || 5001;
 
 // Middlewares
-app.use(cors());
+app.use(cors({
+  origin: "http://localhost:5173", // your frontend URL
+  credentials: true, // allow cookies to be sent
+}));
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
 
 // Routes
 app.use('/api/v1', appRoute);
