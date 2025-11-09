@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { getSingleUserController, loginUserController, registerUserController } from "../controllers/user.controller";
+import { getSingleUserController, loginUserController, logoutUserController, registerUserController } from "../controllers/user.controller";
 
 const router = Router();
 
@@ -10,7 +10,7 @@ router.post('/', registerUserController);
 router.post('/login', loginUserController);
 
 // logout user route
-// router.post('/logout', logoutUserController);
+router.post('/logout', logoutUserController);
 
 // get single user route
 router.get('/:userId', getSingleUserController);

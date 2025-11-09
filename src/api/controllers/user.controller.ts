@@ -8,6 +8,7 @@ import {
   getKeycloakToken,
   getSingleKeycloakUser,
   loginKeycloakUser,
+  revokeRefreshToken,
 } from "../../utils/keyCloak";
 import { UserKeycloakRequest, UserRequest } from "../../types/interfaces/User";
 import prisma from "../../config/prisma";
@@ -179,23 +180,47 @@ export const loginUserController: RequestHandler = async (req, res) => {
   }
 };
 
-// export const logoutUserController: RequestHandler = async (req, res) => {
-//   try {
-//     return null;
-//   } catch (error) {
-//     logger.error(error);
-//     console.log(error);
-//     res
-//       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
-//       .json(
-//         new ErrorResponse(
-//           HTTP_STATUS.INTERNAL_SERVER_ERROR,
-//           "Logout user query internal server error",
-//           error
-//         )
-//       );
-//   }
-// };
+export const logoutUserController: RequestHandler = async (req, res) => {
+  const refreshToken = req.cookies.refresh_token;
+  try {
+
+    const revokeStatus = await revokeRefreshToken(refreshToken);
+    console.log(revokeStatus);
+    
+    // Set cookies securely
+    res.clearCookie("access_token", {
+      httpOnly: true,
+      secure: envConfig.NODE_ENV === "production" ? true : false,
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+    });
+
+    res.clearCookie("refresh_token", {
+      httpOnly: true,
+      secure: envConfig.NODE_ENV === "production" ? true : false,
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+    });
+
+    return res.status(HTTP_STATUS.ACCEPTED).json(
+      new SuccessResponse(
+        HTTP_STATUS.CREATED,
+        "Logout user query was successful",
+        "User has been logged out",
+      )
+    );
+  } catch (error) {
+    logger.error(error);
+    console.log(error);
+    res
+      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+      .json(
+        new ErrorResponse(
+          HTTP_STATUS.INTERNAL_SERVER_ERROR,
+          "Logout user query internal server error",
+          error
+        )
+      );
+  }
+};
 
 // export const checkUserSessionController: RequestHandler = async (req, res) => {
 //   try {
