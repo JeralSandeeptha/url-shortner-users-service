@@ -202,7 +202,7 @@ export const logoutUserController: RequestHandler = async (req, res) => {
 
     return res.status(HTTP_STATUS.ACCEPTED).json(
       new SuccessResponse(
-        HTTP_STATUS.CREATED,
+        HTTP_STATUS.ACCEPTED,
         "Logout user query was successful",
         "User has been logged out",
       )
