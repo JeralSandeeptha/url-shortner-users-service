@@ -6,6 +6,8 @@ import {
   UserKeycloakPayload,
   UserKeycloakRequest,
 } from "../types/interfaces/User";
+import jwt from "jsonwebtoken";
+import jwksClient from "jwks-rsa";
 
 const baseURL = envConfig.KEYCLOACK_SERVER_URL;
 
@@ -119,8 +121,8 @@ export const revokeRefreshToken = async (token: string) => {
       const res = await axios.post(
         `${baseURL}/realms/url-shortner/protocol/openid-connect/revoke`,
         new URLSearchParams({
-          client_id: process.env.KEYCLOAK_CLIENT_ID!,
-          client_secret: process.env.KEYCLOAK_CLIENT_SECRET!,
+          client_id: envConfig.KEYCLOACK_CLIENT_ID!,
+          client_secret: envConfig.KEYCLOACK_CLIENT_SECRET!,
           token: token,
         }),
         {
@@ -135,4 +137,25 @@ export const revokeRefreshToken = async (token: string) => {
     logger.error(error);
     console.log(error);
   }
+};
+
+// Helper: Verify token with Keycloak public key
+export const verifyToken = async (token: string) => {
+  const client = jwksClient({
+    jwksUri: `${baseURL}/realms/url-shortner/protocol/openid-connect/certs`,
+  });
+
+  const decoded = jwt.decode(token, { complete: true });
+
+  if (!decoded || !decoded.header?.kid) {
+    throw new Error("Invalid token");
+  }
+
+  const key = await client.getSigningKey(decoded.header.kid);
+  const signingKey = key.getPublicKey();
+
+  return jwt.verify(token, signingKey, {
+    issuer: `${baseURL}/realms/url-shortner`,
+    audience: "account", // optional but recommended
+  });
 };

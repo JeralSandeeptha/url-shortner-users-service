@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { getSingleUserController, loginUserController, logoutUserController, registerUserController } from "../controllers/user.controller";
+import { checkUserSessionController, getSingleUserController, loginUserController, logoutUserController, registerUserController } from "../controllers/user.controller";
 
 const router = Router();
 
@@ -16,6 +16,6 @@ router.post('/logout', logoutUserController);
 router.get('/:userId', getSingleUserController);
 
 // check user session route
-// router.get('/session/check', checkUserSessionController);
+router.get('/session/check', checkUserSessionController);
 
 export default router;

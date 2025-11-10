@@ -9,6 +9,7 @@ import {
   getSingleKeycloakUser,
   loginKeycloakUser,
   revokeRefreshToken,
+  verifyToken,
 } from "../../utils/keyCloak";
 import { UserKeycloakRequest, UserRequest } from "../../types/interfaces/User";
 import prisma from "../../config/prisma";
@@ -222,20 +223,32 @@ export const logoutUserController: RequestHandler = async (req, res) => {
   }
 };
 
-// export const checkUserSessionController: RequestHandler = async (req, res) => {
-//   try {
-//     return null;
-//   } catch (error) {
-//     logger.error(error);
-//     console.log(error);
-//     res
-//       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
-//       .json(
-//         new ErrorResponse(
-//           HTTP_STATUS.INTERNAL_SERVER_ERROR,
-//           "Check user session query internal server error",
-//           error
-//         )
-//       );
-//   }
-// };
+export const checkUserSessionController: RequestHandler = async (req, res) => {
+  try {
+    const token = req.cookies.access_token;
+
+    if (!token) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const decoded = await verifyToken(token);
+    res.json({ user: decoded });
+  } catch (error: any) {
+    logger.error(error);
+    console.log(error);
+
+    if (error.name === "TokenExpiredError" || error.name === "JsonWebTokenError") {
+      return res.status(401).json({ user: null, message: "Invalid or expired token" });
+    }
+
+    res
+      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+      .json(
+        new ErrorResponse(
+          HTTP_STATUS.INTERNAL_SERVER_ERROR,
+          "Check user session query internal server error",
+          error
+        )
+      );
+  }
+};
