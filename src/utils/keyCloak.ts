@@ -177,3 +177,32 @@ export const deleteKeycloakUser = async (userId: string, token: string) => {
     console.log(error);
   }
 };
+
+export const resetKeycloakUserPassword = async (
+  userId: string,
+  token: string,
+  newPassword: string
+) => {
+  try {
+    const response = await axios.put(
+      `${baseURL}/admin/realms/url-shortner/users/${userId}/reset-password`,
+      {
+        type: "password",
+        temporary: false,
+        value: newPassword,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+    console.log(response.data);
+    console.log(response.status);
+    return response.status;
+  } catch (error) {
+    logger.error(error);
+    console.log(error);
+  }
+};

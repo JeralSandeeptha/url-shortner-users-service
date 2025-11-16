@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { checkUserSessionController, deleteSingleUserController, getSingleUserController, loginUserController, logoutUserController, registerUserController, updateUser2FAController, updateUserPreferencesController, updateUserProfileController } from "../controllers/user.controller";
+import { checkUserSessionController, deleteSingleUserController, getSingleUserController, loginUserController, logoutUserController, registerUserController, resetPasswordController, updateUser2FAController, updateUserPreferencesController, updateUserProfileController } from "../controllers/user.controller";
 
 const router = Router();
 
@@ -32,5 +32,8 @@ router.patch('/:userId/preferences', updateUserPreferencesController);
 
 // update user security route
 router.patch('/:userId/security', updateUser2FAController);
+
+// reset password route
+router.patch('/:userId/reset-password', resetPasswordController);
 
 export default router;

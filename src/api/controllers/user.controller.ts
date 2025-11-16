@@ -9,13 +9,13 @@ import {
   getKeycloakToken,
   getSingleKeycloakUser,
   loginKeycloakUser,
+  resetKeycloakUserPassword,
   revokeRefreshToken,
   verifyToken,
 } from "../../utils/keyCloak";
 import { UserKeycloakRequest, UserRequest } from "../../types/interfaces/User";
 import prisma from "../../config/prisma";
 import { envConfig } from "../../config/envConfig";
-import { time } from "console";
 
 export const registerUserController: RequestHandler = async (req, res) => {
   const { email, password }: UserRequest = req.body;
@@ -480,6 +480,75 @@ export const updateUserProfileController: RequestHandler = async (req, res) => {
         new ErrorResponse(
           HTTP_STATUS.INTERNAL_SERVER_ERROR,
           "Update user profile query internal server error",
+          error
+        )
+      );
+  }
+};
+
+export const resetPasswordController: RequestHandler = async (req, res) => {
+  const { email, currentPassword, newPassword } = req.body;
+  const userId = req.params.userId;
+
+  try {
+    const user = await prisma.user.findFirst({
+      where: {
+        keycloak_id: userId,
+      },
+    });
+
+    if (!user) {
+      logger.error("User not found");
+      return res
+        .status(HTTP_STATUS.NOT_FOUND)
+        .json(
+          new ErrorResponse(
+            HTTP_STATUS.NOT_FOUND,
+            "User not found",
+            "Reset password query was failed"
+          )
+        );
+    }
+
+    const loginData = await loginKeycloakUser(email, currentPassword);
+
+    if(!loginData) {
+        return res.status(HTTP_STATUS.BAD_REQUEST).json(
+            new ErrorResponse(
+                HTTP_STATUS.BAD_REQUEST,
+                "Current password is wrong",
+                "Reset password query was failed",
+            )
+        );
+    }
+
+    const token = await getKeycloakToken();
+
+    if (!token) throw new Error("Missing admin token");
+
+    const status = await resetKeycloakUserPassword(userId, token, newPassword);
+
+    console.log(status);
+
+    logger.info("Reset password query was successful");
+    return res
+      .status(HTTP_STATUS.OK)
+      .json(
+        new SuccessResponse(
+          HTTP_STATUS.OK,
+          "Reset password query was successful",
+          "Reset password query was successful",
+        )
+      );
+  } catch (error) {
+    logger.error(error);
+    console.log(error);
+    res
+      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+      .json(
+        new ErrorResponse(
+          HTTP_STATUS.INTERNAL_SERVER_ERROR,
+          "Reset password query internal server error",
           error
         )
       );
