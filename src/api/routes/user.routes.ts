@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { checkUserSessionController, getSingleUserController, loginUserController, logoutUserController, registerUserController } from "../controllers/user.controller";
+import { checkUserSessionController, deleteSingleUserController, getSingleUserController, loginUserController, logoutUserController, registerUserController, updateUserPreferencesController } from "../controllers/user.controller";
 
 const router = Router();
 
@@ -17,5 +17,14 @@ router.get('/:userId', getSingleUserController);
 
 // check user session route
 router.get('/session/check', checkUserSessionController);
+
+// user delete route
+router.delete('/:userId', deleteSingleUserController);
+
+// get single user route
+router.get('/:userId', getSingleUserController);
+
+// update user preferences route
+router.patch('/:userId/preferences', updateUserPreferencesController);
 
 export default router;

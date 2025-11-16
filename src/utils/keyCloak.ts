@@ -159,3 +159,21 @@ export const verifyToken = async (token: string) => {
     audience: "account", // optional but recommended
   });
 };
+
+export const deleteKeycloakUser = async (userId: string, token: string) => {
+  try {
+    const response = await axios.delete(
+      `${baseURL}/admin/realms/url-shortner/users/${userId}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+    return response.status;
+  } catch (error) {
+    logger.error(error);
+    console.log(error);
+  }
+};

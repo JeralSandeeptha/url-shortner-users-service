@@ -5,6 +5,7 @@ import HTTP_STATUS from "../../types/enums/HttpStatus";
 import { RequestHandler } from "express";
 import {
   createKeycloakUser,
+  deleteKeycloakUser,
   getKeycloakToken,
   getSingleKeycloakUser,
   loginKeycloakUser,
@@ -92,6 +93,7 @@ export const getSingleUserController: RequestHandler = async (req, res) => {
     });
 
     if (!user) {
+      logger.error("User not found");
       return res
         .status(HTTP_STATUS.NOT_FOUND)
         .json(
@@ -103,6 +105,7 @@ export const getSingleUserController: RequestHandler = async (req, res) => {
         );
     }
 
+    logger.info("Get single user query was successful");
     return res
       .status(HTTP_STATUS.OK)
       .json(
@@ -143,6 +146,8 @@ export const loginUserController: RequestHandler = async (req, res) => {
         );
     }
 
+    const decoded = await verifyToken(loginData.access_token);
+
     // Set cookies securely
     res.cookie("access_token", loginData.access_token, {
       httpOnly: true,
@@ -161,8 +166,7 @@ export const loginUserController: RequestHandler = async (req, res) => {
             HTTP_STATUS.ACCEPTED,
             "User login query was successful",
             {
-              access_token: loginData.access_token,
-              refresh_token: loginData.refresh_token,
+              userId: decoded.sub
             }
         )
     );
@@ -247,6 +251,120 @@ export const checkUserSessionController: RequestHandler = async (req, res) => {
         new ErrorResponse(
           HTTP_STATUS.INTERNAL_SERVER_ERROR,
           "Check user session query internal server error",
+          error
+        )
+      );
+  }
+};
+
+export const deleteSingleUserController: RequestHandler = async (req, res) => {
+  const userId = req.params.userId;
+
+  try {
+    // Get admin token from Keycloak
+    const token = await getKeycloakToken();
+
+    const kcStatus = await deleteKeycloakUser(userId, token);
+    if (kcStatus !== 204) {
+      return res.status(HTTP_STATUS.BAD_REQUEST).json(
+        new ErrorResponse(
+          HTTP_STATUS.BAD_REQUEST,
+          "Delete single user query was failed",
+          "Keycloak user deletion failed"
+        )
+      );
+    }
+
+    // Delete user from Postgres
+    const deletedUser = await prisma.user.deleteMany({
+      where: {
+        keycloak_id: userId,
+      },
+    });
+
+    if (deletedUser.count === 0) {
+      return res.status(HTTP_STATUS.NOT_FOUND).json(
+        new ErrorResponse(
+          HTTP_STATUS.NOT_FOUND,
+          "No matching user found in the database",
+          "User not found in the database"
+        )
+      );
+    }
+
+    return res.status(HTTP_STATUS.NO_CONTENT).json(
+      new SuccessResponse(
+        HTTP_STATUS.NO_CONTENT,
+        "User deleted successfully from Keycloak and database",
+        { deletedUser }
+      )
+    );
+  } catch (error) {
+    logger.error(error);
+    console.log(error);
+    res
+      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+      .json(
+        new ErrorResponse(
+          HTTP_STATUS.INTERNAL_SERVER_ERROR,
+          "Delete single user query internal server error",
+          error
+        )
+      );
+  }
+};
+
+export const updateUserPreferencesController: RequestHandler = async (req, res) => {
+  try {
+    const user = await prisma.user.findFirst({
+      where: {
+        user_id: Number(req.params.userId),
+      },
+    });
+
+    if (!user) {
+      logger.error("User not found");
+      return res
+        .status(HTTP_STATUS.NOT_FOUND)
+        .json(
+          new ErrorResponse(
+            HTTP_STATUS.NOT_FOUND,
+            "User not found",
+            "Update user preferences query was failed"
+          )
+        );
+    }
+
+    await prisma.user.update({
+      where: {
+        user_id: Number(req.params.userId),
+      },
+      data: {
+        productUpdates: req.body.productUpdates,
+        securityAlerts: req.body.securityAlerts,
+        weeklySummary: req.body.weeklySummary,
+      }
+    });
+
+    logger.info("Update user preferences query was successful");
+    return res
+      .status(HTTP_STATUS.OK)
+      .json(
+        new SuccessResponse(
+          HTTP_STATUS.OK,
+          "Update user preferences query was successful",
+          "Update user preferences query was successful",
+        )
+      );
+  } catch (error) {
+    logger.error(error);
+    console.log(error);
+    res
+      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+      .json(
+        new ErrorResponse(
+          HTTP_STATUS.INTERNAL_SERVER_ERROR,
+          "Update user preferences query internal server error",
           error
         )
       );
