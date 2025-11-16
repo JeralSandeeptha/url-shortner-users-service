@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { checkUserSessionController, deleteSingleUserController, getSingleUserController, loginUserController, logoutUserController, registerUserController, updateUserPreferencesController } from "../controllers/user.controller";
+import { checkUserSessionController, deleteSingleUserController, getSingleUserController, loginUserController, logoutUserController, registerUserController, updateUser2FAController, updateUserPreferencesController, updateUserProfileController } from "../controllers/user.controller";
 
 const router = Router();
 
@@ -24,7 +24,13 @@ router.delete('/:userId', deleteSingleUserController);
 // get single user route
 router.get('/:userId', getSingleUserController);
 
-// update user preferences route
+// update user profile route
+router.patch('/:userId/profile', updateUserProfileController);
+
+// update user security route
 router.patch('/:userId/preferences', updateUserPreferencesController);
+
+// update user security route
+router.patch('/:userId/security', updateUser2FAController);
 
 export default router;

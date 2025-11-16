@@ -15,6 +15,7 @@ import {
 import { UserKeycloakRequest, UserRequest } from "../../types/interfaces/User";
 import prisma from "../../config/prisma";
 import { envConfig } from "../../config/envConfig";
+import { time } from "console";
 
 export const registerUserController: RequestHandler = async (req, res) => {
   const { email, password }: UserRequest = req.body;
@@ -365,6 +366,120 @@ export const updateUserPreferencesController: RequestHandler = async (req, res) 
         new ErrorResponse(
           HTTP_STATUS.INTERNAL_SERVER_ERROR,
           "Update user preferences query internal server error",
+          error
+        )
+      );
+  }
+};
+
+export const updateUser2FAController: RequestHandler = async (req, res) => {
+  try {
+    const user = await prisma.user.findFirst({
+      where: {
+        user_id: Number(req.params.userId),
+      },
+    });
+
+    if (!user) {
+      logger.error("User not found");
+      return res
+        .status(HTTP_STATUS.NOT_FOUND)
+        .json(
+          new ErrorResponse(
+            HTTP_STATUS.NOT_FOUND,
+            "User not found",
+            "Update user 2FA query was failed"
+          )
+        );
+    }
+
+    await prisma.user.update({
+      where: {
+        user_id: Number(req.params.userId),
+      },
+      data: {
+        twoFactorAuth: req.body.twoFactorAuth,
+      }
+    });
+
+    logger.info("Update user 2FA query was successful");
+    return res
+      .status(HTTP_STATUS.OK)
+      .json(
+        new SuccessResponse(
+          HTTP_STATUS.OK,
+          "Update user 2FA query was successful",
+          "Update user 2FA query was successful",
+        )
+      );
+  } catch (error) {
+    logger.error(error);
+    console.log(error);
+    res
+      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+      .json(
+        new ErrorResponse(
+          HTTP_STATUS.INTERNAL_SERVER_ERROR,
+          "Update user 2FA query internal server error",
+          error
+        )
+      );
+  }
+};
+
+export const updateUserProfileController: RequestHandler = async (req, res) => {
+  try {
+    const user = await prisma.user.findFirst({
+      where: {
+        user_id: Number(req.params.userId),
+      },
+    });
+
+    if (!user) {
+      logger.error("User not found");
+      return res
+        .status(HTTP_STATUS.NOT_FOUND)
+        .json(
+          new ErrorResponse(
+            HTTP_STATUS.NOT_FOUND,
+            "User not found",
+            "Update user profile query was failed"
+          )
+        );
+    }
+
+    await prisma.user.update({
+      where: {
+        user_id: Number(req.params.userId),
+      },
+      data: {
+        image: req.body.image,
+        timeZone: req.body.timeZone,
+        firstName: req.body.firstName,
+        lastName: req.body.lastName,
+        biography: req.body.biography,
+      }
+    });
+
+    logger.info("Update user profile query was successful");
+    return res
+      .status(HTTP_STATUS.OK)
+      .json(
+        new SuccessResponse(
+          HTTP_STATUS.OK,
+          "Update user profile query was successful",
+          "Update user profile query was successful",
+        )
+      );
+  } catch (error) {
+    logger.error(error);
+    console.log(error);
+    res
+      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+      .json(
+        new ErrorResponse(
+          HTTP_STATUS.INTERNAL_SERVER_ERROR,
+          "Update user profile query internal server error",
           error
         )
       );
