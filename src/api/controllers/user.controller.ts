@@ -9,6 +9,7 @@ import {
   getKeycloakToken,
   getSingleKeycloakUser,
   loginKeycloakUser,
+  refreshKeycloakToken,
   resetKeycloakUserPassword,
   revokeRefreshToken,
   verifyToken,
@@ -133,17 +134,19 @@ export const getSingleUserController: RequestHandler = async (req, res) => {
 
 export const loginUserController: RequestHandler = async (req, res) => {
   const { email, password }: UserRequest = req.body;
-  
+
   try {
     const loginData = await loginKeycloakUser(email, password);
 
-    if(!loginData) {
-        return res.status(HTTP_STATUS.BAD_REQUEST).json(
-            new ErrorResponse(
-                HTTP_STATUS.BAD_REQUEST,
-                "User login query was failed",
-                "User login query was failed",
-            )
+    if (!loginData) {
+      return res
+        .status(HTTP_STATUS.BAD_REQUEST)
+        .json(
+          new ErrorResponse(
+            HTTP_STATUS.BAD_REQUEST,
+            "User login query was failed",
+            "User login query was failed"
+          )
         );
     }
 
@@ -163,13 +166,13 @@ export const loginUserController: RequestHandler = async (req, res) => {
     });
 
     return res.status(HTTP_STATUS.ACCEPTED).json(
-        new SuccessResponse(
-            HTTP_STATUS.ACCEPTED,
-            "User login query was successful",
-            {
-              userId: decoded.sub
-            }
-        )
+      new SuccessResponse(
+        HTTP_STATUS.ACCEPTED,
+        "User login query was successful",
+        {
+          userId: decoded.sub,
+        }
+      )
     );
   } catch (error) {
     logger.error(error);
@@ -189,10 +192,9 @@ export const loginUserController: RequestHandler = async (req, res) => {
 export const logoutUserController: RequestHandler = async (req, res) => {
   const refreshToken = req.cookies.refresh_token;
   try {
-
     const revokeStatus = await revokeRefreshToken(refreshToken);
     console.log(revokeStatus);
-    
+
     // Set cookies securely
     res.clearCookie("access_token", {
       httpOnly: true,
@@ -206,13 +208,15 @@ export const logoutUserController: RequestHandler = async (req, res) => {
       sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
     });
 
-    return res.status(HTTP_STATUS.ACCEPTED).json(
-      new SuccessResponse(
-        HTTP_STATUS.ACCEPTED,
-        "Logout user query was successful",
-        "User has been logged out",
-      )
-    );
+    return res
+      .status(HTTP_STATUS.ACCEPTED)
+      .json(
+        new SuccessResponse(
+          HTTP_STATUS.ACCEPTED,
+          "Logout user query was successful",
+          "User has been logged out"
+        )
+      );
   } catch (error) {
     logger.error(error);
     console.log(error);
@@ -230,20 +234,50 @@ export const logoutUserController: RequestHandler = async (req, res) => {
 
 export const checkUserSessionController: RequestHandler = async (req, res) => {
   try {
-    const token = req.cookies.access_token;
+    const access_token = req.cookies.access_token;
+    const refresh_token = req.cookies.refresh_token;
 
-    if (!token) {
-      return res.status(401).json({ message: "Unauthorized" });
+    // Check refresh token existence
+    if (!refresh_token) {
+      return res.status(401).json({ message: "Unauthorized. Please login again" });
     }
 
-    const decoded = await verifyToken(token);
-    res.json({ user: decoded });
+    const decoded = await verifyToken(access_token);
+    if (decoded) {
+      logger.info("Access token is valid");
+      return res.json({ user: decoded });
+    } else {
+      try {
+
+        // Issue new access token
+        const new_access_token = await refreshKeycloakToken(refresh_token);
+
+        // Set cookies securely
+        res.cookie("access_token", new_access_token, {
+          httpOnly: true,
+          secure: envConfig.NODE_ENV === "production" ? true : false, // cookies sends through https or http
+          sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+        });
+
+        return res.json({ message: "New access token issued" });
+      } catch (error) {
+        return res.status(401).json({
+          user: null,
+          message: "Invalid refresh token. Please login again",
+        });
+      }
+    }
   } catch (error: any) {
     logger.error(error);
     console.log(error);
 
-    if (error.name === "TokenExpiredError" || error.name === "JsonWebTokenError") {
-      return res.status(401).json({ user: null, message: "Invalid or expired token" });
+    if (
+      error.name === "TokenExpiredError" ||
+      error.name === "JsonWebTokenError"
+    ) {
+      return res
+        .status(401)
+        .json({ user: null, message: "Invalid or expired token" });
     }
 
     res
@@ -267,13 +301,15 @@ export const deleteSingleUserController: RequestHandler = async (req, res) => {
 
     const kcStatus = await deleteKeycloakUser(userId, token);
     if (kcStatus !== 204) {
-      return res.status(HTTP_STATUS.BAD_REQUEST).json(
-        new ErrorResponse(
-          HTTP_STATUS.BAD_REQUEST,
-          "Delete single user query was failed",
-          "Keycloak user deletion failed"
-        )
-      );
+      return res
+        .status(HTTP_STATUS.BAD_REQUEST)
+        .json(
+          new ErrorResponse(
+            HTTP_STATUS.BAD_REQUEST,
+            "Delete single user query was failed",
+            "Keycloak user deletion failed"
+          )
+        );
     }
 
     // Delete user from Postgres
@@ -284,22 +320,26 @@ export const deleteSingleUserController: RequestHandler = async (req, res) => {
     });
 
     if (deletedUser.count === 0) {
-      return res.status(HTTP_STATUS.NOT_FOUND).json(
-        new ErrorResponse(
-          HTTP_STATUS.NOT_FOUND,
-          "No matching user found in the database",
-          "User not found in the database"
-        )
-      );
+      return res
+        .status(HTTP_STATUS.NOT_FOUND)
+        .json(
+          new ErrorResponse(
+            HTTP_STATUS.NOT_FOUND,
+            "No matching user found in the database",
+            "User not found in the database"
+          )
+        );
     }
 
-    return res.status(HTTP_STATUS.NO_CONTENT).json(
-      new SuccessResponse(
-        HTTP_STATUS.NO_CONTENT,
-        "User deleted successfully from Keycloak and database",
-        { deletedUser }
-      )
-    );
+    return res
+      .status(HTTP_STATUS.NO_CONTENT)
+      .json(
+        new SuccessResponse(
+          HTTP_STATUS.NO_CONTENT,
+          "User deleted successfully from Keycloak and database",
+          { deletedUser }
+        )
+      );
   } catch (error) {
     logger.error(error);
     console.log(error);
@@ -315,7 +355,10 @@ export const deleteSingleUserController: RequestHandler = async (req, res) => {
   }
 };
 
-export const updateUserPreferencesController: RequestHandler = async (req, res) => {
+export const updateUserPreferencesController: RequestHandler = async (
+  req,
+  res
+) => {
   try {
     const user = await prisma.user.findFirst({
       where: {
@@ -344,7 +387,7 @@ export const updateUserPreferencesController: RequestHandler = async (req, res) 
         productUpdates: req.body.productUpdates,
         securityAlerts: req.body.securityAlerts,
         weeklySummary: req.body.weeklySummary,
-      }
+      },
     });
 
     logger.info("Update user preferences query was successful");
@@ -354,7 +397,7 @@ export const updateUserPreferencesController: RequestHandler = async (req, res) 
         new SuccessResponse(
           HTTP_STATUS.OK,
           "Update user preferences query was successful",
-          "Update user preferences query was successful",
+          "Update user preferences query was successful"
         )
       );
   } catch (error) {
@@ -399,7 +442,7 @@ export const updateUser2FAController: RequestHandler = async (req, res) => {
       },
       data: {
         twoFactorAuth: req.body.twoFactorAuth,
-      }
+      },
     });
 
     logger.info("Update user 2FA query was successful");
@@ -409,7 +452,7 @@ export const updateUser2FAController: RequestHandler = async (req, res) => {
         new SuccessResponse(
           HTTP_STATUS.OK,
           "Update user 2FA query was successful",
-          "Update user 2FA query was successful",
+          "Update user 2FA query was successful"
         )
       );
   } catch (error) {
@@ -458,7 +501,7 @@ export const updateUserProfileController: RequestHandler = async (req, res) => {
         firstName: req.body.firstName,
         lastName: req.body.lastName,
         biography: req.body.biography,
-      }
+      },
     });
 
     logger.info("Update user profile query was successful");
@@ -468,7 +511,7 @@ export const updateUserProfileController: RequestHandler = async (req, res) => {
         new SuccessResponse(
           HTTP_STATUS.OK,
           "Update user profile query was successful",
-          "Update user profile query was successful",
+          "Update user profile query was successful"
         )
       );
   } catch (error) {
@@ -512,13 +555,15 @@ export const resetPasswordController: RequestHandler = async (req, res) => {
 
     const loginData = await loginKeycloakUser(email, currentPassword);
 
-    if(!loginData) {
-        return res.status(HTTP_STATUS.BAD_REQUEST).json(
-            new ErrorResponse(
-                HTTP_STATUS.BAD_REQUEST,
-                "Current password is wrong",
-                "Reset password query was failed",
-            )
+    if (!loginData) {
+      return res
+        .status(HTTP_STATUS.BAD_REQUEST)
+        .json(
+          new ErrorResponse(
+            HTTP_STATUS.BAD_REQUEST,
+            "Current password is wrong",
+            "Reset password query was failed"
+          )
         );
     }
 
@@ -537,7 +582,7 @@ export const resetPasswordController: RequestHandler = async (req, res) => {
         new SuccessResponse(
           HTTP_STATUS.OK,
           "Reset password query was successful",
-          "Reset password query was successful",
+          "Reset password query was successful"
         )
       );
   } catch (error) {

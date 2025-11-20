@@ -206,3 +206,28 @@ export const resetKeycloakUserPassword = async (
     console.log(error);
   }
 };
+
+export const refreshKeycloakToken = async (refreshToken: string) => {
+
+  const data = new URLSearchParams({
+    client_id: process.env.KEYCLOACK_CLIENT_ID!,
+    client_secret: process.env.KEYCLOACK_CLIENT_SECRET!, 
+    grant_type: "refresh_token",
+    refresh_token: refreshToken,
+  });
+
+  try {
+    const res = await axios.post(
+      `${baseURL}/realms/url-shortner/protocol/openid-connect/token`,
+      data,
+      {
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      }
+    );
+    console.log(res.data);
+    return res.data.access_token;
+  } catch (error) {
+    logger.error(error);
+    console.log(error);
+  }
+};
