@@ -8,13 +8,14 @@ import './config/dbConfig';
 //import routes
 import appRoute from "./api/routes/app.route";
 import userRoute from "./api/routes/user.routes";
+import { envConfig } from './config/envConfig';
 
 const app: Application = express();
 const PORT = process.env.PORT || 5001;
 
 // Middlewares
 app.use(cors({
-  origin: "http://localhost:5173", // your frontend URL
+  origin: `${envConfig.BASE_URL}`, // your frontend URL
   credentials: true, // allow cookies to be sent
 }));
 app.use(express.json());
