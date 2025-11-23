@@ -7,8 +7,9 @@ COPY tsconfig.json ./
 COPY src ./src
 COPY prisma ./prisma
 RUN npm install -g npm@latest
+RUN npm ci
 RUN npx prisma generate
-RUN npm ci && npm run build
+RUN npm run build
 
 # Stage 2: Run with PM2
 FROM node:20-alpine AS runner
