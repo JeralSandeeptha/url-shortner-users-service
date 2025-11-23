@@ -10,6 +10,12 @@ RUN npm install
 # Because we are bind the directory to the host machine
 # COPY . .
 
+# Copy the Prisma schema (needed for `prisma generate`)
+COPY prisma ./prisma
+
+# Generate the Prisma client during image build
+RUN npx prisma generate
+
 EXPOSE 5001
 
-CMD [ "npm", "run", "dev" ]
+CMD ["sh", "-c", "npx prisma generate && npm run dev"]
