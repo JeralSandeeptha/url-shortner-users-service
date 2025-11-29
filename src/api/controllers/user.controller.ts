@@ -157,12 +157,14 @@ export const loginUserController: RequestHandler = async (req, res) => {
       httpOnly: true,
       secure: envConfig.NODE_ENV === "production" ? true : false, // cookies sends through https or http
       sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+      domain: envConfig.DOMAIN
     });
 
     res.cookie("refresh_token", loginData.refresh_token, {
       httpOnly: true,
       secure: envConfig.NODE_ENV === "production" ? true : false,
       sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+      domain: envConfig.DOMAIN
     });
 
     return res.status(HTTP_STATUS.ACCEPTED).json(
@@ -200,12 +202,14 @@ export const logoutUserController: RequestHandler = async (req, res) => {
       httpOnly: true,
       secure: envConfig.NODE_ENV === "production" ? true : false,
       sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+      domain: envConfig.DOMAIN
     });
 
     res.clearCookie("refresh_token", {
       httpOnly: true,
       secure: envConfig.NODE_ENV === "production" ? true : false,
       sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+      domain: envConfig.DOMAIN
     });
 
     return res
@@ -257,6 +261,7 @@ export const checkUserSessionController: RequestHandler = async (req, res) => {
           httpOnly: true,
           secure: envConfig.NODE_ENV === "production" ? true : false, // cookies sends through https or http
           sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+          domain: envConfig.DOMAIN
         });
 
         return res.json({ message: "New access token issued" });

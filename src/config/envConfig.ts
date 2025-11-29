@@ -11,5 +11,6 @@ export const envConfig = {
     KEYCLOACK_CLIENT_ID: process.env.KEYCLOACK_CLIENT_ID,
     KEYCLOACK_CLIENT_SECRET: process.env.KEYCLOACK_CLIENT_SECRET,
     BASE_URL: process.env.BASE_URL,
-    NODE_ENV: process.env.NODE_ENV
+    NODE_ENV: process.env.NODE_ENV,
+    DOMAIN: process.env.DOMAIN,
 }
