@@ -156,15 +156,19 @@ export const loginUserController: RequestHandler = async (req, res) => {
     res.cookie("access_token", loginData.access_token, {
       httpOnly: true,
       secure: envConfig.NODE_ENV === "production" ? true : false, // cookies sends through https or http
-      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-      // domain: envConfig.DOMAIN
+      sameSite: envConfig.NODE_ENV === "production" ? "none" : "lax",
+      maxAge: 60 * 1000 * 15, // 5 minute in milliseconds
+      domain:
+        envConfig.NODE_ENV === "production" ? envConfig.DOMAIN : undefined,
     });
 
     res.cookie("refresh_token", loginData.refresh_token, {
       httpOnly: true,
       secure: envConfig.NODE_ENV === "production" ? true : false,
-      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-      // domain: envConfig.DOMAIN
+      sameSite: envConfig.NODE_ENV === "production" ? "none" : "lax",
+      maxAge: 1000 * 60 * 60 * 24 * 1, // 1 day
+      domain:
+        envConfig.NODE_ENV === "production" ? envConfig.DOMAIN : undefined,
     });
 
     return res.status(HTTP_STATUS.ACCEPTED).json(
@@ -243,7 +247,9 @@ export const checkUserSessionController: RequestHandler = async (req, res) => {
 
     // Check refresh token existence
     if (!refresh_token) {
-      return res.status(401).json({ message: "Unauthorized. Please login again" });
+      return res
+        .status(401)
+        .json({ message: "Unauthorized. Please login again" });
     }
 
     const decoded = await verifyToken(access_token);
@@ -252,16 +258,17 @@ export const checkUserSessionController: RequestHandler = async (req, res) => {
       return res.json({ user: decoded });
     } else {
       try {
-
         // Issue new access token
         const new_access_token = await refreshKeycloakToken(refresh_token);
 
         // Set cookies securely
-        res.cookie("access_token", new_access_token, {
+        res.cookie("access_token", new_access_token.access_token, {
           httpOnly: true,
           secure: envConfig.NODE_ENV === "production" ? true : false, // cookies sends through https or http
-          sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-          // domain: envConfig.DOMAIN
+          sameSite: envConfig.NODE_ENV === "production" ? "none" : "lax",
+          maxAge: 60 * 1000 * 15, // 5 minute in milliseconds
+          domain:
+            envConfig.NODE_ENV === "production" ? envConfig.DOMAIN : undefined,
         });
 
         return res.json({ message: "New access token issued" });
