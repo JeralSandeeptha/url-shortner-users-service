@@ -158,6 +158,7 @@ export const loginUserController: RequestHandler = async (req, res) => {
       secure: envConfig.NODE_ENV === "production" ? true : false, // cookies sends through https or http
       sameSite: envConfig.NODE_ENV === "production" ? "none" : "lax",
       maxAge: 60 * 1000 * 15, // 5 minute in milliseconds
+      path: "/",
       domain:
         envConfig.NODE_ENV === "production" ? envConfig.DOMAIN : undefined,
     });
@@ -167,6 +168,7 @@ export const loginUserController: RequestHandler = async (req, res) => {
       secure: envConfig.NODE_ENV === "production" ? true : false,
       sameSite: envConfig.NODE_ENV === "production" ? "none" : "lax",
       maxAge: 1000 * 60 * 60 * 24 * 1, // 1 day
+      path: "/",
       domain:
         envConfig.NODE_ENV === "production" ? envConfig.DOMAIN : undefined,
     });
@@ -267,6 +269,7 @@ export const checkUserSessionController: RequestHandler = async (req, res) => {
           secure: envConfig.NODE_ENV === "production" ? true : false, // cookies sends through https or http
           sameSite: envConfig.NODE_ENV === "production" ? "none" : "lax",
           maxAge: 60 * 1000 * 15, // 5 minute in milliseconds
+          path: "/",
           domain:
             envConfig.NODE_ENV === "production" ? envConfig.DOMAIN : undefined,
         });
