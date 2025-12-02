@@ -208,14 +208,18 @@ export const logoutUserController: RequestHandler = async (req, res) => {
       httpOnly: true,
       secure: envConfig.NODE_ENV === "production" ? true : false,
       sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-      // domain: envConfig.DOMAIN
+      path: "/",
+      domain:
+        envConfig.NODE_ENV === "production" ? envConfig.DOMAIN : undefined,
     });
 
     res.clearCookie("refresh_token", {
       httpOnly: true,
       secure: envConfig.NODE_ENV === "production" ? true : false,
       sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-      // domain: envConfig.DOMAIN
+      path: "/",
+      domain:
+        envConfig.NODE_ENV === "production" ? envConfig.DOMAIN : undefined,
     });
 
     return res
